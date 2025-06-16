@@ -1,0 +1,71 @@
+---
+# This automation simulates the use of the IKEA TRADFRI Dimmer control
+# connected through ZHA.
+
+# | Button      | Action |
+# | ----------- | ------ |
+# | on (short)  | Custom |
+# | off (short) | Custom |
+# | on (long)   | Custom |
+# | off (long)  | Custom |
+
+blueprint:
+  source_url: https://github.com/Krossmaskinen/home-assistant-blueprints/blob/main/2%20button%20blueprint.yaml
+
+  name: ZHA - IKEA TRADFRI - 2 Button Remote - OnOff
+
+  description: >-
+    This automation simulates the use of the IKEA TRADFRI on/off switch
+    connected through ZHA.
+
+  domain: automation
+
+  input:
+    remote:
+      name: IKEA TRADFRI remote control
+      description: Select the remote control you wish to use.
+      selector:
+        device:
+          filter:
+            - integration: zha
+              manufacturer: IKEA of Sweden
+              model: TRADFRI on/off switch
+    on_short:
+      name: On short press
+      description: The action to perform on short press of the On Button
+      selector:
+        action:
+      default: []
+    off_short:
+      name: Off short press
+      description: The action to perform on short press of the Off Button
+      selector:
+        action:
+      default: []
+    
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+
+action:
+  - choose:
+      # Short Press on the On Button
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.command == "on" }}'
+        sequence: !input on_short
+      # Short Press on the Off Button
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.command == "off" }}'
+        sequence: !input off_short
+
+      
+
+    # Any other event will cancel the repeat loops (i.e. releasing the [on|off] button)
+    default: []
